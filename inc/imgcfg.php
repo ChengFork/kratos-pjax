@@ -6,11 +6,11 @@ function kratos_banner(){
         $kratos_banner_on = kratos_option("kratos_banner")&&kratos_option("kratos_banner1")?1:0;
         if($kratos_banner_on){
             for($i=1; $i<6; $i++){
-                $kratos_banner{$i} = kratos_option("kratos_banner{$i}")?kratos_option("kratos_banner{$i}"):"";
-                $kratos_banner_url{$i} = kratos_option("kratos_banner_url{$i}")?kratos_option("kratos_banner_url{$i}"):"";
-                if($kratos_banner{$i}){
-                    $banners[] = $kratos_banner{$i};
-                    $banners_url[] = $kratos_banner_url{$i};
+                $kratos_banner[$i] = kratos_option("kratos_banner{$i}")?kratos_option("kratos_banner{$i}"):"";
+                $kratos_banner_url[$i] = kratos_option("kratos_banner_url{$i}")?kratos_option("kratos_banner_url{$i}"):"";
+                if($kratos_banner[$i]){
+                    $banners[] = $kratos_banner[$i];
+                    $banners_url[] = $kratos_banner_url[$i];
                 }
             }
             $count = count($banners);
@@ -55,7 +55,7 @@ function kratos_blog_thumbnail(){
     $img_url = $img_url[0];
     if(has_post_thumbnail()) echo '<a href="'.get_permalink().'"><img src="'.$img_url.'" alt="'.get_the_title().'"></a>';
 }
-add_filter('add_image_size',create_function('','return 1;'));
+add_filter('add_image_size',function(){return 1;});
 add_theme_support("post-thumbnails");
 function kratos_blog_thumbnail_new(){
     global $post;

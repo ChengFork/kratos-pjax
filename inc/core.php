@@ -220,7 +220,7 @@ function kratos_description(){
     if(is_home()||is_front_page()){echo trim(kratos_option('site_description'));}
     elseif(is_category()){$description = strip_tags(category_description());echo trim($description);}
     elseif(is_single()){ 
-        if(get_the_excerpt()){echo get_the_excerpt();}
+        if(has_excerpt() && get_the_excerpt()){echo get_the_excerpt();}
         else{global $post;$description = trim(str_replace(array("\r\n","\r","\n","　"," ")," ",str_replace("\"","'",strip_tags(do_shortcode($post->post_content)))));echo mb_substr($description,0,220,'utf-8');}
     }
     elseif(is_search()){echo '“';the_search_query();global $wp_query;echo '”'.sprintf(__('为您找到结果 %s 个','moedog'),$wp_query->found_posts);}
@@ -329,7 +329,6 @@ function cmhello_users_search_order($obj){
 }
 //Enable comments <img>
 function sig_allowed_html_tags_in_comments(){
-   define('CUSTOM_TAGS',true);
    global $allowedtags;
    $allowedtags = array(
       'img'=> array(
@@ -349,6 +348,13 @@ function kratos_comment_err($a){
     echo $a;
     exit;
 }
+function spam_protection($commentdata){
+    if(!is_user_logged_in()){
+        if($_POST['co_num1']+$_POST['co_num2']-3!=$_POST['code']) kratos_comment_err(__('验证码错误','moedog'));
+    }
+    return $commentdata;
+}
+add_filter('pre_comment_on_post','spam_protection');
 function kratos_comment_callback(){
     $comment = wp_handle_comment_submission(wp_unslash($_POST));
     if(is_wp_error($comment)){
@@ -479,14 +485,14 @@ function kratos_get_html_sitemap(){
 </head>
 <body>
 <div class="container">
-    <h1 class="page-title"><a href="<?php bloginfo('url'); ?>" target="_blank">SiteMap</a></h1><?php
+    <h1 class="page-title"><a href="<?php echo get_option('home').'/sitemap.xml'; ?>" target="_blank">Sitemap</a></h1><?php
     $posts = get_posts('numberposts=-1&orderby=post_date&order=DESC');
     if(count($posts)): ?>
     <h2 class="section-title">文章 / Article</h2>
     <ul class="sitemap-lists post-lists clear-fix">
         <?php foreach($posts as $post) : 
                 $title = $post->post_title;
-                $title = htmlspecialchars($title); ?>
+                $title = htmlspecialchars_decode($title,ENT_QUOTES); ?>
         <li><a href="<?php echo get_permalink($post->ID); ?>" title="<?php echo $title; ?>" target="_blank"><?php echo $title; ?></a></li>
         <?php endforeach; ?>
     </ul><?php
@@ -497,7 +503,7 @@ function kratos_get_html_sitemap(){
     <ul class="sitemap-lists post-lists clear-fix">
         <?php foreach($pages as $page) : 
                 $title = $page->post_title;
-                $title = htmlspecialchars($title); ?>
+                $title = htmlspecialchars_decode($title,ENT_QUOTES); ?>
         <li><a href="<?php echo get_page_link($page->ID); ?>" title="<?php echo $title; ?>" target="_blank"><?php echo $title; ?></a></li>
         <?php endforeach; ?>
     </ul><?php
@@ -508,7 +514,7 @@ function kratos_get_html_sitemap(){
     <ul class="sitemap-lists category-lists clear-fix">
         <?php foreach ($categorys as $category) : 
                 $title = $category->name;
-                $title = htmlspecialchars($title); ?>
+                $title = htmlspecialchars_decode($title,ENT_QUOTES); ?>
         <li><a href="<?php echo get_term_link($category, $category->slug); ?>" title="<?php echo $title; ?>" target="_blank"><?php echo $title; ?></a></li>
         <?php endforeach; ?>
     </ul><?php
@@ -519,7 +525,7 @@ function kratos_get_html_sitemap(){
     <ul class="sitemap-lists tag-lists clear-fix">
         <?php foreach ($tags as $tag) : 
                 $title = $tag->name;
-                $title = htmlspecialchars($title); ?>
+                $title = htmlspecialchars_decode($title,ENT_QUOTES); ?>
         <li><a href="<?php echo get_term_link($tag, $tag->slug); ?>" title="<?php echo $title; ?>" target="_blank"><?php echo $title; ?></a></li>
         <?php endforeach; ?>
     </ul>
@@ -559,16 +565,3 @@ function comment_author_link_window(){
     return $return;
 }
 add_filter('get_comment_author_link','comment_author_link_window');
-//Notice ***PLEASE DO NOT EDIT THIS 请不要修改此内容***
-function kratos_admin_notice(){
-    global $noticeinfo;
-    $noticeinfo = wp_remote_retrieve_body(wp_remote_get('https://api.fczbl.vip/kratos_notice/?v='.KRATOS_VERSION));
-    if(!is_wp_error($noticeinfo)&&$noticeinfo) $noticeinfo = '<style type="text/css">.about-description a{text-decoration:none}</style><div class="notice notice-info"><p class="about-description">'.$noticeinfo.'</p></div>';
-    if(kratos_option('kratos_notice')=='global') echo $noticeinfo;
-}
-function kratos_welcome_notice(){
-    global $noticeinfo;
-    echo $noticeinfo;
-}
-add_action('admin_notices','kratos_admin_notice');
-if(kratos_option('kratos_notice')=="welcome") add_action('welcome_panel','kratos_welcome_notice');
